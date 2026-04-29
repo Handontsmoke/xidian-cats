@@ -410,13 +410,17 @@ const headers = {
 };
 
 async function fetchDonations() {
+  console.log('正在连接 JSONBin...', `${JSONBIN_BASE}/${BIN_ID}/latest`);
   try {
     const res = await fetch(`${JSONBIN_BASE}/${BIN_ID}/latest`, { headers });
-    if (!res.ok) throw new Error('JSONBin fetch failed');
+    console.log('JSONBin 响应状态:', res.status);
+    if (!res.ok) throw new Error('JSONBin fetch failed: ' + res.status);
     const json = await res.json();
+    console.log('JSONBin 数据:', json);
     return json.record?.donations || [];
   } catch (e) {
-    console.warn('JSONBin unavailable, using localStorage:', e.message);
+    console.error('JSONBin 连接失败:', e);
+    showToast('网络异常，已使用本地数据');
     return JSON.parse(localStorage.getItem('donations') || '[]');
   }
 }
@@ -425,15 +429,24 @@ async function saveDonations(data) {
   // 保存到 localStorage
   localStorage.setItem('donations', JSON.stringify(data));
   
-  // 尝试保存到 JSONBin
+  // 保存到 JSONBin
   try {
-    await fetch(`${JSONBIN_BASE}/${BIN_ID}`, {
+    const payload = { donations: data, updated: new Date().toISOString() };
+    console.log('正在保存到 JSONBin...', payload);
+    
+    const res = await fetch(`${JSONBIN_BASE}/${BIN_ID}`, {
       method: 'PUT',
       headers,
-      body: JSON.stringify({ donations: data, updated: new Date().toISOString() })
+      body: JSON.stringify(payload)
     });
+    
+    console.log('JSONBin 保存响应:', res.status);
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('JSONBin 保存失败:', err);
+    }
   } catch (e) {
-    console.warn('JSONBin save failed, data saved locally only');
+    console.error('JSONBin 保存异常:', e);
   }
 }
 
@@ -500,8 +513,10 @@ let pendingDonation = null;
 // 初始化
 // ============================================================
 (async function() {
+  console.log('西电猫认捐系统启动...');
   try {
     await init();
+    console.log('初始化完成，认捐记录数:', donations.length);
   } catch(e) {
     console.warn('init-failed-use-offline:', e.message ? e.message : e);
     donations = JSON.parse(localStorage.getItem('donations') || '[]');
