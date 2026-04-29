@@ -935,9 +935,19 @@ function formatDate(iso) {
 }
 
 // ============================================================
-// 启动
 // ============================================================
-init();
+(async function() {
+  try { await init(); }
+  catch(e) {
+    console.warn('supabase-init-failed-use-offline:', e.message; e);
+    donations = JSON.parse(localStorage.getItem('donations'); '[]');
+    populateCatSelect();
+    renderStats();
+    renderDonationList();
+    renderCatTables();
+  }
+})();
+</script>
 </script>
 </body>
 </html>
