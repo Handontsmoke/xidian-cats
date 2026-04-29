@@ -935,19 +935,18 @@ function formatDate(iso) {
 }
 
 // ============================================================
-// ============================================================
-(async function() {
-  try { await init(); }
-  catch(e) {
-    console.warn('supabase-init-failed-use-offline:', e.message; e);
-    donations = JSON.parse(localStorage.getItem('donations'); '[]');
-    populateCatSelect();
-    renderStats();
-    renderDonationList();
-    renderCatTables();
-  }
-})();
-</script>
+(async function() {
+  try { await init(); }
+  catch(e) {
+    console.warn('init-failed-use-offline:', e.message ? e.message : e);
+    donations = JSON.parse(localStorage.getItem('donations') ? localStorage.getItem('donations') : '[]');
+    populateCatSelect();
+    renderStats();
+    renderDonationList();
+    renderCatTables();
+  }
+})();
+</script>
 </script>
 </body>
 </html>
