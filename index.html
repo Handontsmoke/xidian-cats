@@ -3,18 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🐱 西电猫疫苗认捐</title>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <title>🐱 西电教学区猫咪疫苗情况</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     :root {
       --primary: #ff7043;
-      --primary-light: #fff3e0;
       --green: #66bb6a;
-      --red: #ef5350;
+      --blue: #42a5f5;
       --gray: #9e9e9e;
       --bg: #fafafa;
-      --card: #ffffff;
-      --border: #e0e0e0;
       --text: #212121;
       --text2: #757575;
     }
@@ -26,810 +23,330 @@
       min-height: 100vh;
     }
 
-    /* ===== HEADER ===== */
+    /* HEADER */
     header {
-      background: linear-gradient(135deg, #ff7043 0%, #ff5722 60%, #e64a19 100%);
-      padding: 24px 20px 20px;
+      background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%);
+      padding: 32px 20px;
       text-align: center;
       color: #fff;
-      position: relative;
-      overflow: hidden;
     }
-    header::before {
-      content: '🐱';
-      font-size: 80px;
-      position: absolute;
-      top: -10px; right: -10px;
-      opacity: 0.15;
-    }
-    header h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; letter-spacing: 1px; }
-    header p { font-size: 13px; opacity: 0.9; line-height: 1.6; }
+    header h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    header p { font-size: 14px; opacity: 0.9; }
 
-    /* ===== STATS BAR ===== */
-    .stats-bar {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      padding: 16px 20px;
+    /* MAIN */
+    main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
       background: #fff;
-      border-bottom: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
     }
-    .stat-item { display: flex; flex-direction: column; align-items: center; min-width: 80px; }
-    .stat-num { font-size: 24px; font-weight: 700; color: var(--primary); }
-    .stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .stat-num { font-size: 32px; font-weight: 800; color: var(--primary); }
+    .stat-num.green { color: var(--green); }
+    .stat-num.blue { color: var(--blue); }
+    .stat-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
 
-    /* ===== MAIN ===== */
-    main { max-width: 860px; margin: 0 auto; padding: 20px 16px; }
-
-    /* ===== SECTION ===== */
-    .section { margin-bottom: 0; }
-    .section-divider {
-      border-top: 2px dashed #ff7043;
-      padding-top: 28px;
-      margin-top: 28px;
+    /* CHART */
+    .chart-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      margin-bottom: 32px;
     }
-    .section-title {
+    .chart-title {
       font-size: 16px;
       font-weight: 700;
-      margin-bottom: 12px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-
-    /* ===== INFO BOX ===== */
-    .info-box {
-      background: #fff8e1;
-      border-left: 4px solid #ffc107;
-      border-radius: 8px;
-      padding: 14px 16px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      line-height: 1.8;
-      color: #5d4037;
+    .chart-wrap {
+      max-width: 400px;
+      margin: 0 auto;
     }
-    .info-box strong { color: var(--primary); }
 
-    /* ===== DONATE FORM ===== */
-    .donate-card {
+    /* TABLE */
+    .table-container {
       background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 2px 12px rgba(255,112,67,.12);
-      padding: 24px 20px;
-      margin-bottom: 20px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
     }
-    .form-row { margin-bottom: 16px; }
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text2);
-    }
-    select, input[type=text], input[type=tel] {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-      transition: border .2s;
-      background: #fff;
-    }
-    select:focus, input:focus { border-color: var(--primary); }
-    select option:disabled { color: #bbb; }
-
-    .shot-selector { display: flex; gap: 10px; flex-wrap: wrap; }
-    .shot-btn {
-      flex: 1;
-      min-width: 90px;
-      padding: 10px 8px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 13px;
-      text-align: center;
-      transition: all .2s;
-    }
-    .shot-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700; }
-    .shot-btn.taken { background: #f5f5f5; color: #bbb; cursor: not-allowed; text-decoration: line-through; }
-    .shot-btn .shot-price { font-size: 11px; color: var(--gray); display: block; margin-top: 2px; }
-    .shot-btn.selected .shot-price { color: var(--primary); }
-
-    .btn-submit {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #ff7043, #ff5722);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
+    .table-title {
       font-size: 16px;
       font-weight: 700;
-      cursor: pointer;
-      transition: opacity .2s;
-      letter-spacing: 1px;
+      padding: 20px 20px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .btn-submit:hover { opacity: .88; }
-    .btn-submit:disabled { opacity: .4; cursor: not-allowed; }
-
-    /* ===== CAT TABLE ===== */
     .table-wrap { overflow-x: auto; }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
-      background: #fff;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      font-size: 14px;
     }
-    th { background: #ff7043; color: #fff; padding: 10px 12px; text-align: center; font-weight: 600; white-space: nowrap; }
-    td { padding: 9px 12px; text-align: center; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    th {
+      background: #ff7043;
+      color: #fff;
+      padding: 12px 16px;
+      text-align: center;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    td {
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid #f5f5f5;
+    }
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: #fff8f5; }
-    .cat-name { font-weight: 700; font-size: 14px; }
-    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .cat-name { font-weight: 700; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
     .badge-done { background: #e8f5e9; color: #2e7d32; }
     .badge-pending { background: #fff3e0; color: #e65100; border: 1.5px dashed #ff9800; }
-    .badge-na { background: #f5f5f5; color: #9e9e9e; }
-    .badge-full { background: #e3f2fd; color: #1565c0; }
 
-    /* ===== QR PAYMENT ===== */
-    .qr-section {
-      background: #fff;
-      border-radius: 14px;
-      padding: 20px;
+    /* FOOTER */
+    footer {
       text-align: center;
-      box-shadow: 0 2px 12px rgba(0,0,0,.06);
-      margin-bottom: 20px;
-    }
-    .qr-section h3 { font-size: 15px; margin-bottom: 16px; color: var(--text); }
-    .qr-section img { width: 100%; max-width: 480px; border-radius: 10px; }
-    .qr-note {
-      font-size: 12px;
+      padding: 32px 16px;
       color: var(--text2);
-      margin-top: 12px;
-      line-height: 1.7;
-      background: #fff3e0;
-      padding: 10px 14px;
-      border-radius: 8px;
+      font-size: 13px;
     }
 
-    /* ===== DONATION LIST ===== */
-    .donation-list { display: flex; flex-direction: column; gap: 10px; }
-    .donation-item {
-      background: #fff;
-      border-radius: 10px;
-      padding: 14px 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .donation-avatar {
-      width: 40px; height: 40px;
-      background: var(--primary-light);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .donation-info { flex: 1; }
-    .donation-info .name { font-weight: 700; font-size: 14px; }
-    .donation-info .detail { font-size: 12px; color: var(--text2); margin-top: 3px; }
-    .donation-amount { font-size: 16px; font-weight: 700; color: var(--primary); }
-
-    /* ===== EXPORT BTN ===== */
-    .btn-export {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      background: #43a047;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity .2s;
-    }
-    .btn-export:hover { opacity: .85; }
-
-    /* ===== MODAL ===== */
-    .modal-overlay {
-      display: none;
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.5);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-overlay.show { display: flex; }
-    .modal { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 420px; width: 100%; text-align: center; }
-    .modal-icon { font-size: 48px; margin-bottom: 12px; }
-    .modal h3 { font-size: 18px; margin-bottom: 8px; }
-    .modal p { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; }
-    .modal-btns { display: flex; gap: 10px; }
-    .modal-btn { flex: 1; padding: 11px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .modal-btn-cancel { background: #f5f5f5; color: var(--text2); }
-    .modal-btn-ok { background: var(--primary); color: #fff; }
-
-    /* ===== TOAST ===== */
-    .toast {
-      position: fixed; bottom: 30px; left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: #323232; color: #fff;
-      padding: 12px 24px; border-radius: 30px;
-      font-size: 14px; opacity: 0;
-      transition: all .3s; z-index: 200; pointer-events: none;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--gray); font-size: 15px; gap: 10px; }
-    .spinner { width: 22px; height: 22px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    @media (max-width: 520px) {
-      header h1 { font-size: 21px; }
-      .stat-num { font-size: 20px; }
-      table { font-size: 12px; }
-      td, th { padding: 8px 8px; }
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      th, td { padding: 10px 8px; font-size: 13px; }
+      .chart-wrap { max-width: 280px; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🐱 西电猫疫苗认捐</h1>
-  <p>每月账目公开 · 常设募捐通道<br>帮助校园猫咪完成疫苗接种，守护它们的健康</p>
+  <h1>🐱 西电教学区猫咪疫苗情况</h1>
+  <p>实时更新 · 守护校园猫咪健康</p>
 </header>
-
-<div class="stats-bar" id="statsBar">
-  <div class="stat-item"><span class="stat-num" id="statCats">-</span><span class="stat-label">只猫咪</span></div>
-  <div class="stat-item"><span class="stat-num" id="statDonors">-</span><span class="stat-label">位认捐者</span></div>
-  <div class="stat-item"><span class="stat-num" id="statShots">-</span><span class="stat-label">针已认捐</span></div>
-  <div class="stat-item"><span class="stat-num" id="statAmount">-</span><span class="stat-label">元已筹集</span></div>
-</div>
 
 <main>
 
-  <!-- ===== 认捐表单 ===== -->
-  <div class="section" id="section-donate">
-    <div class="info-box">
-      🏥 合作医院：<strong>紫薇京和医院</strong><br>
-      💉 团购价：<strong>30元/针</strong>（妙三多疫苗）<br>
-      😻 对于成年猫，通常需要完成两针核心疫苗（猫三联，预防猫瘟、猫疱疹和猫杯状病毒）<br>
-      📌 认捐后请扫码付款，备注您的昵称和猫咪名
+  <!-- 统计数据 -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">-</div>
+      <div class="stat-label">猫咪总数</div>
     </div>
-
-    <div class="donate-card">
-      <div class="form-row">
-        <label>🐱 选择猫咪</label>
-        <select id="catSelect" onchange="onCatChange()">
-          <option value="">-- 请选择猫咪 --</option>
-        </select>
-      </div>
-
-      <div class="form-row" id="shotRow" style="display:none">
-        <label>💉 选择针次</label>
-        <div class="shot-selector" id="shotSelector"></div>
-      </div>
-
-      <div class="form-row" id="donorRow" style="display:none">
-        <label>👤 您的昵称</label>
-        <input type="text" id="donorName" placeholder="请输入昵称（将公开显示）" maxlength="20" />
-      </div>
-
-      <div class="form-row" id="remarkRow" style="display:none">
-        <label>💬 留言（可选）</label>
-        <input type="text" id="remarkInput" placeholder="给小猫加油打气 🐾" maxlength="50" />
-      </div>
-
-      <button class="btn-submit" id="submitBtn" disabled onclick="submitDonation()">
-        🤍 提交认捐
-      </button>
+    <div class="stat-card">
+      <div class="stat-num green" id="statComplete">-</div>
+      <div class="stat-label">已完成</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num blue" id="statPending">-</div>
+      <div class="stat-label">待接种</div>
     </div>
   </div>
 
-  <!-- ===== 疫苗情况 ===== -->
-  <div class="section-divider" id="section-cats">
-    <div class="section-title">🏫 教学区猫咪疫苗情况</div>
-    <div class="table-wrap" id="table-teaching">
-      <div class="loading"><div class="spinner"></div>加载中…</div>
-    </div>
-    <div class="section-title" style="margin-top:24px">🏠 家属区猫咪疫苗情况</div>
-    <div class="table-wrap" id="table-family">
-      <div class="loading"><div class="spinner"></div>加载中…</div>
+  <!-- 饼图 -->
+  <div class="chart-container">
+    <div class="chart-title">📊 疫苗接种进度</div>
+    <div class="chart-wrap">
+      <canvas id="pieChart"></canvas>
     </div>
   </div>
 
-  <!-- ===== 认捐记录 ===== -->
-  <div class="section-divider" id="section-records">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-      <span class="section-title" style="margin:0">📃 认捐记录</span>
-      <button class="btn-export" onclick="exportExcel()">📥 导出 Excel</button>
-    </div>
-    <div id="donationList">
-      <div class="loading"><div class="spinner"></div>加载中…</div>
-    </div>
-  </div>
-
-  <!-- ===== 扫码付款 ===== -->
-  <div class="section-divider" id="section-payment">
-    <div class="qr-section">
-      <h3>💳 扫码付款（微信 / 支付宝）</h3>
-      <img src="qrcode.png" alt="付款二维码" onerror="this.style.display='none';document.getElementById('qr-fallback').style.display='block'" />
-      <div id="qr-fallback" style="display:none;padding:40px;background:#f5f5f5;border-radius:10px;color:#999;font-size:14px">
-        图片加载失败，请联系管理员
-      </div>
-      <div class="qr-note">
-        ⚠️ 付款时请务必备注：<strong>昵称 + 猫咪名 + 针次</strong><br>
-        例如：小王 + 银杏 + 第二针<br>
-        每针 <strong>30元</strong>，款项将用于购买妙三多/喵倍护疫苗接种
-      </div>
+  <!-- 疫苗情况表 -->
+  <div class="table-container">
+    <div class="table-title">💉 教学区猫咪疫苗详情</div>
+    <div class="table-wrap">
+      <table id="catTable">
+        <thead>
+          <tr>
+            <th>猫咪</th>
+            <th>第一针</th>
+            <th>第二针</th>
+            <th>加强针</th>
+            <th>疫苗品牌</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 
 </main>
 
-<!-- 确认弹窗 -->
-<div class="modal-overlay" id="confirmModal">
-  <div class="modal">
-    <div class="modal-icon">🐾</div>
-    <h3>确认认捐</h3>
-    <p id="confirmText"></p>
-    <div class="modal-btns">
-      <button class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</button>
-      <button class="modal-btn modal-btn-ok" onclick="confirmDonation()">确认认捐</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<footer>
+  <p>数据更新于 <span id="updateTime">-</span></p>
+  <p style="margin-top:8px">如有疑问请联系管理员</p>
+</footer>
 
 <script>
 // ============================================================
-// 轻量后端配置 - JSONBin.io (免费、API简单、国内可访问)
-// ============================================================
-const BIN_ID = '69f1845636566621a803e55d';  // 替换为你的 bin ID
-const JSONBIN_KEY = '$2a$10$RlaMv2KZelwGlTr6bfXgu.HUdJA1WRy4SuLVzz5tvL32TQDowvhwi';  // 可选：不填则使用公开读取模式
-
-// ============================================================
-// JSONBin API 操作
-// ============================================================
-const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
-const headers = {
-  'Content-Type': 'application/json',
-  ...(JSONBIN_KEY ? { 'X-Access-Key': JSONBIN_KEY } : {})
-};
-
-async function fetchDonations() {
-  console.log('正在连接 JSONBin...', `${JSONBIN_BASE}/${BIN_ID}/latest`);
-  try {
-    const res = await fetch(`${JSONBIN_BASE}/${BIN_ID}/latest`, { headers });
-    console.log('JSONBin 响应状态:', res.status);
-    if (!res.ok) throw new Error('JSONBin fetch failed: ' + res.status);
-    const json = await res.json();
-    console.log('JSONBin 数据:', json);
-    return json.record?.donations || [];
-  } catch (e) {
-    console.error('JSONBin 连接失败:', e);
-    showToast('网络异常，已使用本地数据');
-    return JSON.parse(localStorage.getItem('donations') || '[]');
-  }
-}
-
-async function saveDonations(data) {
-  // 保存到 localStorage
-  localStorage.setItem('donations', JSON.stringify(data));
-  
-  // 保存到 JSONBin
-  try {
-    const payload = { donations: data, updated: new Date().toISOString() };
-    console.log('正在保存到 JSONBin...', payload);
-    
-    const res = await fetch(`${JSONBIN_BASE}/${BIN_ID}`, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(payload)
-    });
-    
-    console.log('JSONBin 保存响应:', res.status);
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('JSONBin 保存失败:', err);
-    }
-  } catch (e) {
-    console.error('JSONBin 保存异常:', e);
-  }
-}
-
-// ============================================================
 // 猫咪数据
 // ============================================================
-const CATS = {
-  teaching: [
-    { name: '茶叶大蛋', shot1: null, shot2: null, boost: null, brand: null },
-    { name: '银杏',     shot1: '2025-12', shot2: null, boost: null, brand: '喵倍护' },
-    { name: '大头',     shot1: '2025-07', shot2: '2025-09', boost: '2025-10', brand: '妙三多' },
-    { name: '二头',     shot1: '2025-07', shot2: '2025-09', boost: '2025-10', brand: '妙三多' },
-    { name: '漂亮橘',   shot1: '2025-10', shot2: null, boost: null, brand: '妙三多' },
-    { name: '渣男',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '豆腐脑',   shot1: null, shot2: null, boost: null, brand: null },
-    { name: '脏白',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '蓝豆',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '豆花',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
-    { name: '大面包',   shot1: '2025-08', shot2: '2025-09', boost: null, brand: '妙三多' },
-    { name: '警长',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
-    { name: '黑哥',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '橙留香',   shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
-    { name: '裤裤',     shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
-    { name: '虎先锋',   shot1: null, shot2: null, boost: null, brand: null },
-    { name: '深情哥',   shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
-    { name: '白介',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
-    { name: '豆介',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '芸豆',     shot1: '2025-11', shot2: '2026-04', boost: '世界和平', brand: '妙三多' },
-    { name: '二橙',     shot1: '2026-03', shot2: '2026-03', boost: '2026-04', brand: '妙三多' },
-    { name: '二柑',     shot1: '2026-03', shot2: '2026-03', boost: '2026-04', brand: '妙三多' },
-    { name: '天水',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '奶霜',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '来才',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '黑小虎',   shot1: '2025-12', shot2: null, boost: null, brand: '喵倍护' },
-    { name: '水手',     shot1: null, shot2: null, boost: null, brand: null },
-    { name: '小花',     shot1: '2025-10', shot2: '2025-11', boost: '2025-11', brand: '妙三多' },
-    { name: '焦炭馒头', shot1: null, shot2: null, boost: null, brand: null },
-    { name: '斜眼狼儿子', shot1: null, shot2: null, boost: null, brand: null },
-    { name: '麻薯',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
-  ],
-  family: []
-};
-
-const ALL_CATS = [
-  ...CATS.teaching.map(c => ({ ...c, area: '教学区' })),
-  ...CATS.family.map(c => ({ ...c, area: '家属区' })),
-];
-
-const SHOTS = [
-  { key: 'shot1', label: '第一针', price: 30 },
-  { key: 'shot2', label: '第二针', price: 30 },
-  { key: 'boost', label: '加强针', price: 30 },
+const CATS = [
+  { name: '茶叶大蛋', shot1: null, shot2: null, boost: null, brand: null },
+  { name: '银杏',     shot1: '2025-12', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '大头',     shot1: '2025-07', shot2: '2025-09', boost: '2025-10', brand: '妙三多' },
+  { name: '二头',     shot1: '2025-07', shot2: '2025-09', boost: '2025-10', brand: '妙三多' },
+  { name: '漂亮橘',   shot1: '2025-10', shot2: null, boost: null, brand: '妙三多' },
+  { name: '渣男',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '豆腐脑',   shot1: null, shot2: null, boost: null, brand: null },
+  { name: '脏白',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '蓝豆',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '豆花',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '大面包',   shot1: '2025-08', shot2: '2025-09', boost: null, brand: '妙三多' },
+  { name: '警长',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '黑哥',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '橙留香',   shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
+  { name: '裤裤',     shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
+  { name: '虎先锋',   shot1: null, shot2: null, boost: null, brand: null },
+  { name: '深情哥',   shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
+  { name: '白介',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '豆介',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '芸豆',     shot1: '2025-11', shot2: '2026-04', boost: null, brand: '妙三多' },
+  { name: '二橙',     shot1: '2026-03', shot2: '2026-03', boost: '2026-04', brand: '妙三多' },
+  { name: '二柑',     shot1: '2026-03', shot2: '2026-03', boost: '2026-04', brand: '妙三多' },
+  { name: '天水',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '奶霜',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '来才',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '黑小虎',   shot1: '2025-12', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '水手',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '小花',     shot1: '2025-10', shot2: '2025-11', boost: '2025-11', brand: '妙三多' },
+  { name: '焦炭馒头', shot1: null, shot2: null, boost: null, brand: null },
+  { name: '斜眼狼儿子', shot1: null, shot2: null, boost: null, brand: null },
+  { name: '麻薯',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
 ];
 
 // ============================================================
-// 全局状态
+// 页面初始化
 // ============================================================
-let donations = [];
-let selectedCat = null;
-let selectedShot = null;
-let pendingDonation = null;
-
-// ============================================================
-// 初始化
-// ============================================================
-(async function() {
-  console.log('西电猫认捐系统启动...');
-  try {
-    await init();
-    console.log('初始化完成，认捐记录数:', donations.length);
-  } catch(e) {
-    console.warn('init-failed-use-offline:', e.message ? e.message : e);
-    donations = JSON.parse(localStorage.getItem('donations') || '[]');
-    populateCatSelect();
-    renderStats();
-    renderDonationList();
-    renderCatTables();
-  }
-})();
-
-async function init() {
-  populateCatSelect();
-  await loadDonations();
+document.addEventListener('DOMContentLoaded', () => {
   renderStats();
-  renderDonationList();
-  renderCatTables();
-}
+  renderChart();
+  renderTable();
+  document.getElementById('updateTime').textContent = new Date().toLocaleString('zh-CN');
+});
 
 // ============================================================
-// 加载认捐记录
-// ============================================================
-async function loadDonations() {
-  donations = await fetchDonations();
-  // 按时间倒序
-  donations.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-}
-
-// ============================================================
-// 获取某猫某针的认捐信息
-// ============================================================
-function getDonation(catName, shotKey) {
-  return donations.find(d => d.cat_name === catName && d.shot_key === shotKey);
-}
-
-// ============================================================
-// 填充猫咪下拉框
-// ============================================================
-function populateCatSelect() {
-  const sel = document.getElementById('catSelect');
-  sel.innerHTML = '<option value="">-- 请选择猫咪 --</option>';
-
-  const groups = { '教学区': CATS.teaching, '家属区': CATS.family };
-  for (const [area, cats] of Object.entries(groups)) {
-    if (!cats.length) continue;
-    const og = document.createElement('optgroup');
-    og.label = area === '教学区' ? '🏫 教学区' : '🏠 家属区';
-    cats.forEach(cat => {
-      const opt = document.createElement('option');
-      opt.value = cat.name;
-      opt.textContent = cat.name;
-      og.appendChild(opt);
-    });
-    sel.appendChild(og);
-  }
-}
-
-// ============================================================
-// 猫咪选择变化
-// ============================================================
-function onCatChange() {
-  const name = document.getElementById('catSelect').value;
-  selectedCat = ALL_CATS.find(c => c.name === name) || null;
-  selectedShot = null;
-
-  const shotRow = document.getElementById('shotRow');
-  const donorRow = document.getElementById('donorRow');
-  const remarkRow = document.getElementById('remarkRow');
-
-  if (selectedCat) {
-    shotRow.style.display = '';
-    donorRow.style.display = '';
-    remarkRow.style.display = '';
-    updateShotSelector();
-  } else {
-    shotRow.style.display = 'none';
-    donorRow.style.display = 'none';
-    remarkRow.style.display = 'none';
-  }
-  updateSubmitBtn();
-}
-
-function updateShotSelector() {
-  if (!selectedCat) return;
-  const container = document.getElementById('shotSelector');
-  container.innerHTML = '';
-
-  SHOTS.forEach(shot => {
-    const btn = document.createElement('button');
-    btn.className = 'shot-btn';
-    btn.type = 'button';
-
-    const existingRecord = getDonation(selectedCat.name, shot.key);
-    const catHasDate = !!selectedCat[shot.key];
-    const isTaken = !!existingRecord || catHasDate;
-
-    if (isTaken) {
-      btn.classList.add('taken');
-      btn.innerHTML = shot.label + '<br><span class="shot-price">' +
-        (existingRecord ? '已认捐:'+existingRecord.donor_name : (catHasDate ? '已接种' : '')) +
-        '</span>';
-      btn.disabled = true;
-    } else {
-      btn.innerHTML = shot.label + '<span class="shot-price">¥' + shot.price + '</span>';
-      if (selectedShot === shot.key) btn.classList.add('selected');
-      btn.onclick = () => selectShot(shot.key);
-    }
-    container.appendChild(btn);
-  });
-}
-
-function selectShot(key) {
-  selectedShot = key;
-  document.querySelectorAll('.shot-btn').forEach(b => b.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
-  updateSubmitBtn();
-}
-
-function updateSubmitBtn() {
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = !(selectedCat && selectedShot);
-}
-
-// ============================================================
-// 提交认捐
-// ============================================================
-function submitDonation() {
-  const donor = document.getElementById('donorName').value.trim();
-  const remark = document.getElementById('remarkInput').value.trim();
-  if (!donor) { showToast('请填写您的昵称 🐾'); return; }
-  if (!selectedCat || !selectedShot) return;
-
-  const shotLabel = SHOTS.find(s => s.key === selectedShot).label;
-  document.getElementById('confirmText').innerHTML =
-    '您将认捐 <strong>' + selectedCat.name + '</strong> 的 <strong>' + shotLabel + '</strong><br>' +
-    '认捐人：<strong>' + donor + '</strong><br>金额：<strong>¥30</strong>（请扫码付款）';
-
-  pendingDonation = { cat_name: selectedCat.name, shot_key: selectedShot, donor_name: donor, remark: remark, amount: 30 };
-  document.getElementById('confirmModal').classList.add('show');
-}
-
-function closeModal() {
-  document.getElementById('confirmModal').classList.remove('show');
-  pendingDonation = null;
-}
-
-async function confirmDonation() {
-  closeModal();
-  if (!pendingDonation) return;
-
-  const record = { ...pendingDonation, id: Date.now(), created_at: new Date().toISOString() };
-  
-  // 添加到本地列表
-  donations.unshift(record);
-  
-  // 保存到存储
-  await saveDonations(donations);
-  
-  showToast('认捐成功！请扫码付款 💝');
-
-  // 重置表单
-  document.getElementById('catSelect').value = '';
-  document.getElementById('donorName').value = '';
-  document.getElementById('remarkInput').value = '';
-  selectedCat = null; selectedShot = null;
-  document.getElementById('shotRow').style.display = 'none';
-  document.getElementById('donorRow').style.display = 'none';
-  document.getElementById('remarkRow').style.display = 'none';
-  updateSubmitBtn();
-  renderStats(); renderDonationList(); renderCatTables();
-  pendingDonation = null;
-}
-
-// ============================================================
-// 统计
+// 统计数据
 // ============================================================
 function renderStats() {
-  const totalCats = ALL_CATS.length;
-  const totalDonors = new Set(donations.map(d => d.donor_name)).size;
-  const totalShots = donations.length;
-  const totalAmount = totalShots * 30;
-  document.getElementById('statCats').textContent = totalCats;
-  document.getElementById('statDonors').textContent = totalDonors;
-  document.getElementById('statShots').textContent = totalShots;
-  document.getElementById('statAmount').textContent = totalAmount;
-}
-
-// ============================================================
-// 猫咪疫苗表格
-// ============================================================
-function renderCatTables() {
-  renderCatTable(CATS.teaching, 'table-teaching');
-  const famEl = document.getElementById('table-family');
-  if (CATS.family.length) {
-    renderCatTable(CATS.family, 'table-family');
-  } else {
-    famEl.innerHTML = '<p style="color:#999;padding:16px;text-align:center">暂无家属区猫咪数据</p>';
-  }
-}
-
-function renderCatTable(cats, containerId) {
-  const container = document.getElementById(containerId);
-  let html = '<table><thead><tr><th>猫咪</th><th>第一针</th><th>第二针</th><th>加强针</th><th>疫苗品牌</th></tr></thead><tbody>';
-
-  cats.forEach(cat => {
-    html += '<tr><td class="cat-name">' + escHtml(cat.name) + '</td>';
-    html += renderShotCell(cat, 'shot1');
-    html += renderShotCell(cat, 'shot2');
-    html += renderShotCell(cat, 'boost');
-    html += '<td>' + (cat.brand ? '<span class="badge badge-na">' + escHtml(cat.brand) + '</span>' : '<span style="color:#ccc">-</span>') + '</td>';
-    html += '</tr>';
+  const total = CATS.length;
+  let complete = 0;
+  
+  CATS.forEach(cat => {
+    // 完成标准：第一针已打 + 至少完成两针
+    if (cat.shot1 && cat.shot2) {
+      complete++;
+    }
   });
-
-  html += '</tbody></table>';
-  container.innerHTML = html;
-}
-
-function renderShotCell(cat, shotKey) {
-  const dateVal = cat[shotKey];
-  const donationRecord = getDonation(cat.name, shotKey);
-  if (dateVal && dateVal !== '世界和平') {
-    return '<td><span class="badge badge-done">✓ ' + escHtml(dateVal) + '</span></td>';
-  }
-  if (dateVal === '世界和平') {
-    return '<td><span class="badge badge-done">✓ 世界和平</span></td>';
-  }
-  if (donationRecord) {
-    return '<td><span class="badge badge-full">💝 ' + escHtml(donationRecord.donor_name) + '</span></td>';
-  }
-  return '<td><span class="badge badge-pending">待认捐</span></td>';
+  
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statComplete').textContent = complete;
+  document.getElementById('statPending').textContent = total - complete;
 }
 
 // ============================================================
-// 认捐记录列表
+// 饼图
 // ============================================================
-function renderDonationList() {
-  const container = document.getElementById('donationList');
-  if (!donations.length) {
-    container.innerHTML = '<div style="text-align:center;color:#bbb;padding:40px">暂无认捐记录，快来成为第一个吧 🐾</div>';
-    return;
-  }
-  const shotLabelMap = { shot1: '第一针', shot2: '第二针', boost: '加强针' };
-  const emojis = ['🐱','😸','🐾','💝','✨','🌟','🍀'];
-
-  let html = '<div class="donation-list">';
-  donations.forEach((d, i) => {
-    html += '<div class="donation-item">' +
-      '<div class="donation-avatar">' + emojis[i % emojis.length] + '</div>' +
-      '<div class="donation-info">' +
-        '<div class="name">' + escHtml(d.donor_name) + ' 认捐了 <strong>' + escHtml(d.cat_name) + '</strong> 的 ' + (shotLabelMap[d.shot_key] || d.shot_key) + '</div>' +
-        '<div class="detail">' + (d.remark ? '💬 ' + escHtml(d.remark) + ' · ' : '') + formatDate(d.created_at) + '</div>' +
-      '</div>' +
-      '<div class="donation-amount">¥' + (d.amount || 30) + '</div>' +
-    '</div>';
+function renderChart() {
+  const total = CATS.length;
+  let fullVaccinated = 0;    // 三针全齐
+  let partialVaccinated = 0;  // 部分接种
+  let unvaccinated = 0;       // 未接种
+  
+  CATS.forEach(cat => {
+    if (cat.shot1 && cat.shot2 && cat.boost) {
+      fullVaccinated++;
+    } else if (cat.shot1) {
+      partialVaccinated++;
+    } else {
+      unvaccinated++;
+    }
   });
-  html += '</div>';
-  container.innerHTML = html;
+  
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['三针全齐', '部分接种', '未接种'],
+      datasets: [{
+        data: [fullVaccinated, partialVaccinated, unvaccinated],
+        backgroundColor: ['#66bb6a', '#ff9800', '#ef5350'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 16,
+            font: { size: 13 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const pct = Math.round(ctx.raw / total * 100);
+              return `${ctx.label}: ${ctx.raw} 只 (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // ============================================================
-// 导出 Excel
+// 表格
 // ============================================================
-function exportExcel() {
-  const shotLabelMap = { shot1: '第一针', shot2: '第二针', boost: '加强针' };
-  const rows = donations.map(d => ({
-    '认捐人': d.donor_name,
-    '猫咪名': d.cat_name,
-    '针次': shotLabelMap[d.shot_key] || d.shot_key,
-    '金额(元)': d.amount || 30,
-    '留言': d.remark || '',
-    '时间': formatDate(d.created_at),
-  }));
-  rows.push({});
-  rows.push({ '认捐人': '总计', '金额(元)': donations.reduce((s, d) => s + (d.amount || 30), 0) });
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 24 }, { wch: 18 }];
-  XLSX.utils.book_append_sheet(wb, ws, '认捐记录');
-
-  const catRows = ALL_CATS.map(cat => ({
-    '区域': cat.area,
-    '猫咪名': cat.name,
-    '第一针接种': cat.shot1 || (getDonation(cat.name,'shot1') ? '已认捐:'+getDonation(cat.name,'shot1').donor_name : '待认捐'),
-    '第二针接种': cat.shot2 || (getDonation(cat.name,'shot2') ? '已认捐:'+getDonation(cat.name,'shot2').donor_name : '待认捐'),
-    '加强针接种': cat.boost || (getDonation(cat.name,'boost') ? '已认捐:'+getDonation(cat.name,'boost').donor_name : '待认捐'),
-    '疫苗品牌': cat.brand || '-',
-  }));
-  const ws2 = XLSX.utils.json_to_sheet(catRows);
-  ws2['!cols'] = [{ wch: 8 }, { wch: 12 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 10 }];
-  XLSX.utils.book_append_sheet(wb, ws2, '疫苗情况');
-
-  XLSX.writeFile(wb, '西电猫认捐_' + new Date().toLocaleDateString('zh-CN').replace(/\//g,'-') + '.xlsx');
-  showToast('Excel 导出成功 📥');
+function renderTable() {
+  const tbody = document.querySelector('#catTable tbody');
+  tbody.innerHTML = '';
+  
+  CATS.forEach(cat => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="cat-name">${escHtml(cat.name)}</td>
+      <td>${renderShotCell(cat.shot1)}</td>
+      <td>${renderShotCell(cat.shot2)}</td>
+      <td>${renderShotCell(cat.boost)}</td>
+      <td>${cat.brand ? `<span class="badge badge-done">${escHtml(cat.brand)}</span>` : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-// ============================================================
-// 工具函数
-// ============================================================
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+function renderShotCell(date) {
+  if (date) {
+    return `<span class="badge badge-done">✓ ${escHtml(date)}</span>`;
+  }
+  return `<span class="badge badge-pending">待接种</span>`;
 }
 
 function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function formatDate(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
 }
 </script>
 </body>
