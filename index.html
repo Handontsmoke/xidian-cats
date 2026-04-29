@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐱 西电教学区猫咪疫苗情况</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <style>
+    :root {
+      --primary: #ff7043;
+      --green: #66bb6a;
+      --blue: #42a5f5;
+      --gray: #9e9e9e;
+      --bg: #fafafa;
+      --text: #212121;
+      --text2: #757575;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%);
+      padding: 32px 20px;
+      text-align: center;
+      color: #fff;
+    }
+    header h1 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    header p { font-size: 14px; opacity: 0.9; }
+
+    /* MAIN */
+    main { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .stat-num { font-size: 32px; font-weight: 800; color: var(--primary); }
+    .stat-num.green { color: var(--green); }
+    .stat-num.blue { color: var(--blue); }
+    .stat-label { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+    /* CHART */
+    .chart-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      margin-bottom: 32px;
+    }
+    .chart-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chart-wrap {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    /* TABLE */
+    .table-container {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .table-title {
+      font-size: 16px;
+      font-weight: 700;
+      padding: 20px 20px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th {
+      background: #ff7043;
+      color: #fff;
+      padding: 12px 16px;
+      text-align: center;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    td {
+      padding: 12px 16px;
+      text-align: center;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fff8f5; }
+    .cat-name { font-weight: 700; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-done { background: #e8f5e9; color: #2e7d32; }
+    .badge-pending { background: #fff3e0; color: #e65100; border: 1.5px dashed #ff9800; }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text2);
+      font-size: 13px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      th, td { padding: 10px 8px; font-size: 13px; }
+      .chart-wrap { max-width: 280px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🐱 西电教学区猫咪疫苗情况</h1>
+  <p>实时更新 · 守护校园猫咪健康</p>
+</header>
+
+<main>
+
+  <!-- 统计数据 -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">-</div>
+      <div class="stat-label">猫咪总数</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num green" id="statComplete">-</div>
+      <div class="stat-label">已完成</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num blue" id="statPending">-</div>
+      <div class="stat-label">待接种</div>
+    </div>
+  </div>
+
+  <!-- 饼图 -->
+  <div class="chart-container">
+    <div class="chart-title">📊 疫苗接种进度</div>
+    <div class="chart-wrap">
+      <canvas id="pieChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 疫苗情况表 -->
+  <div class="table-container">
+    <div class="table-title">💉 教学区猫咪疫苗详情</div>
+    <div class="table-wrap">
+      <table id="catTable">
+        <thead>
+          <tr>
+            <th>猫咪</th>
+            <th>第一针</th>
+            <th>第二针</th>
+            <th>加强针</th>
+            <th>疫苗品牌</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>数据更新于 <span id="updateTime">-</span></p>
+  <p style="margin-top:8px">如有疑问请联系管理员</p>
+</footer>
+
+<script>
+// ============================================================
+// 猫咪数据
+// ============================================================
+const CATS = [
+  { name: '茶叶大蛋', shot1: null, shot2: null, boost: null, brand: null },
+  { name: '银杏',     shot1: '2025-12', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '大头',     shot1: '2025-07', shot2: '2025-09', boost: '2025-10', brand: '妙三多' },
+  { name: '二头',     shot1: '2025-07', shot2: '2025-09', boost: '2025-10', brand: '妙三多' },
+  { name: '漂亮橘',   shot1: '2025-10', shot2: null, boost: null, brand: '妙三多' },
+  { name: '渣男',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '豆腐脑',   shot1: null, shot2: null, boost: null, brand: null },
+  { name: '脏白',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '蓝豆',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '豆花',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '大面包',   shot1: '2025-08', shot2: '2025-09', boost: null, brand: '妙三多' },
+  { name: '警长',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '黑哥',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '橙留香',   shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
+  { name: '裤裤',     shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
+  { name: '虎先锋',   shot1: null, shot2: null, boost: null, brand: null },
+  { name: '深情哥',   shot1: '2025-11', shot2: '2026-03', boost: '2026-04', brand: '喵倍护' },
+  { name: '白介',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '豆介',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '芸豆',     shot1: '2025-11', shot2: '2026-04', boost: null, brand: '妙三多' },
+  { name: '二橙',     shot1: '2026-03', shot2: '2026-03', boost: '2026-04', brand: '妙三多' },
+  { name: '二柑',     shot1: '2026-03', shot2: '2026-03', boost: '2026-04', brand: '妙三多' },
+  { name: '天水',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '奶霜',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '来才',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '黑小虎',   shot1: '2025-12', shot2: null, boost: null, brand: '喵倍护' },
+  { name: '水手',     shot1: null, shot2: null, boost: null, brand: null },
+  { name: '小花',     shot1: '2025-10', shot2: '2025-11', boost: '2025-11', brand: '妙三多' },
+  { name: '焦炭馒头', shot1: null, shot2: null, boost: null, brand: null },
+  { name: '斜眼狼儿子', shot1: null, shot2: null, boost: null, brand: null },
+  { name: '麻薯',     shot1: '2025-11', shot2: null, boost: null, brand: '喵倍护' },
+];
+
+// ============================================================
+// 页面初始化
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderStats();
+  renderChart();
+  renderTable();
+  document.getElementById('updateTime').textContent = new Date().toLocaleString('zh-CN');
+});
+
+// ============================================================
+// 统计数据
+// ============================================================
+function renderStats() {
+  const total = CATS.length;
+  let complete = 0;
+  
+  CATS.forEach(cat => {
+    // 完成标准：第一针已打 + 至少完成两针
+    if (cat.shot1 && cat.shot2) {
+      complete++;
+    }
+  });
+  
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statComplete').textContent = complete;
+  document.getElementById('statPending').textContent = total - complete;
+}
+
+// ============================================================
+// 饼图
+// ============================================================
+function renderChart() {
+  const total = CATS.length;
+  let fullVaccinated = 0;    // 三针全齐
+  let partialVaccinated = 0;  // 部分接种
+  let unvaccinated = 0;       // 未接种
+  
+  CATS.forEach(cat => {
+    if (cat.shot1 && cat.shot2 && cat.boost) {
+      fullVaccinated++;
+    } else if (cat.shot1) {
+      partialVaccinated++;
+    } else {
+      unvaccinated++;
+    }
+  });
+  
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['三针全齐', '部分接种', '未接种'],
+      datasets: [{
+        data: [fullVaccinated, partialVaccinated, unvaccinated],
+        backgroundColor: ['#66bb6a', '#ff9800', '#ef5350'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 16,
+            font: { size: 13 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const pct = Math.round(ctx.raw / total * 100);
+              return `${ctx.label}: ${ctx.raw} 只 (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// 表格
+// ============================================================
+function renderTable() {
+  const tbody = document.querySelector('#catTable tbody');
+  tbody.innerHTML = '';
+  
+  CATS.forEach(cat => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="cat-name">${escHtml(cat.name)}</td>
+      <td>${renderShotCell(cat.shot1)}</td>
+      <td>${renderShotCell(cat.shot2)}</td>
+      <td>${renderShotCell(cat.boost)}</td>
+      <td>${cat.brand ? `<span class="badge badge-done">${escHtml(cat.brand)}</span>` : '-'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderShotCell(date) {
+  if (date) {
+    return `<span class="badge badge-done">✓ ${escHtml(date)}</span>`;
+  }
+  return `<span class="badge badge-pending">待接种</span>`;
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
