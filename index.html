@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🐱 西电猫疫苗认捐</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
@@ -396,11 +395,47 @@
 
 <script>
 // ============================================================
-// Supabase 配置
+// 轻量后端配置 - JSONBin.io (免费、API简单、国内可访问)
 // ============================================================
-const SUPABASE_URL = 'https://xtfuksziqktqhmhcvrya.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0ZnVrc3ppcWt0cWhtaGN2cnlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MDE4OTQsImV4cCI6MjA5Mjk3Nzg5NH0.ipmMBgTQoCOjYs-nHg0NKn6MLqgKR1QhHHDl621RlmY';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const BIN_ID = '69f1845636566621a803e55d';  // 替换为你的 bin ID
+const JSONBIN_KEY = '$2a$10$RlaMv2KZelwGlTr6bfXgu.HUdJA1WRy4SuLVzz5tvL32TQDowvhwi';  // 可选：不填则使用公开读取模式
+
+// ============================================================
+// JSONBin API 操作
+// ============================================================
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+const headers = {
+  'Content-Type': 'application/json',
+  ...(JSONBIN_KEY ? { 'X-Access-Key': JSONBIN_KEY } : {})
+};
+
+async function fetchDonations() {
+  try {
+    const res = await fetch(`${JSONBIN_BASE}/${BIN_ID}/latest`, { headers });
+    if (!res.ok) throw new Error('JSONBin fetch failed');
+    const json = await res.json();
+    return json.record?.donations || [];
+  } catch (e) {
+    console.warn('JSONBin unavailable, using localStorage:', e.message);
+    return JSON.parse(localStorage.getItem('donations') || '[]');
+  }
+}
+
+async function saveDonations(data) {
+  // 保存到 localStorage
+  localStorage.setItem('donations', JSON.stringify(data));
+  
+  // 尝试保存到 JSONBin
+  try {
+    await fetch(`${JSONBIN_BASE}/${BIN_ID}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ donations: data, updated: new Date().toISOString() })
+    });
+  } catch (e) {
+    console.warn('JSONBin save failed, data saved locally only');
+  }
+}
 
 // ============================================================
 // 猫咪数据
@@ -469,7 +504,7 @@ let pendingDonation = null;
     await init();
   } catch(e) {
     console.warn('init-failed-use-offline:', e.message ? e.message : e);
-    donations = JSON.parse(localStorage.getItem('donations') ? localStorage.getItem('donations') : '[]');
+    donations = JSON.parse(localStorage.getItem('donations') || '[]');
     populateCatSelect();
     renderStats();
     renderDonationList();
@@ -483,36 +518,15 @@ async function init() {
   renderStats();
   renderDonationList();
   renderCatTables();
-
-  // 实时订阅
-  supabase
-    .channel('donations')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'donations' }, () => {
-      loadDonations().then(() => {
-        renderStats();
-        renderDonationList();
-        renderCatTables();
-        updateShotSelector();
-      });
-    })
-    .subscribe();
 }
 
 // ============================================================
 // 加载认捐记录
 // ============================================================
 async function loadDonations() {
-  try {
-    const { data, error } = await supabase
-      .from('donations')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    donations = data || [];
-  } catch (e) {
-    const local = JSON.parse(localStorage.getItem('donations') ? localStorage.getItem('donations') : '[]');
-    donations = local;
-  }
+  donations = await fetchDonations();
+  // 按时间倒序
+  donations.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
 // ============================================================
@@ -637,19 +651,15 @@ async function confirmDonation() {
   closeModal();
   if (!pendingDonation) return;
 
-  const record = { ...pendingDonation, created_at: new Date().toISOString() };
-
-  try {
-    const { error } = await supabase.from('donations').insert([record]);
-    if (error) throw error;
-    showToast('认捐成功！请扫码付款 💝');
-  } catch(e) {
-    const local = JSON.parse(localStorage.getItem('donations') ? localStorage.getItem('donations') : '[]');
-    local.unshift({ ...pendingDonation, id: Date.now(), created_at: new Date().toISOString() });
-    localStorage.setItem('donations', JSON.stringify(local));
-    donations = local;
-    showToast('认捐已记录（离线模式）💝 请扫码付款');
-  }
+  const record = { ...pendingDonation, id: Date.now(), created_at: new Date().toISOString() };
+  
+  // 添加到本地列表
+  donations.unshift(record);
+  
+  // 保存到存储
+  await saveDonations(donations);
+  
+  showToast('认捐成功！请扫码付款 💝');
 
   // 重置表单
   document.getElementById('catSelect').value = '';
